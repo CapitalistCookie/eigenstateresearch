@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.6
+    container_name: rp-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    restart: unless-stopped
+
+  trilium:
+    image: triliumnext/notes:v0.91.6
+    container_name: rp-trilium
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./trilium_data:/home/node/trilium-data
+    restart: unless-stopped
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: rp-openwebui
+    ports:
+      - "3000:8080"
+    volumes:
+      - ./openwebui_data:/app/backend/data
+    environment:
+      - OPENAI_API_BASE_URL=https://api.deepseek.com/v1
+      - OPENAI_API_KEY=${DEEPSEEK_API_KEY}
+      - WEBUI_AUTH=false
+    restart: unless-stopped
+
+  processor:
+    build:
+      context: .
+      dockerfile: processor/Dockerfile
+    container_name: rp-processor
+    depends_on:
+      - qdrant
+      - trilium
+    env_file: .env
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - TRILIUM_URL=http://trilium:8080
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  scrapers:
+    build:
+      context: .
+      dockerfile: scrapers/Dockerfile
+    container_name: rp-scrapers
+    depends_on:
+      - qdrant
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
