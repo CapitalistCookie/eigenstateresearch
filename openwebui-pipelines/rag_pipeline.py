@@ -1,13 +1,11 @@
 """
-OpenWebUI Pipeline: Research RAG
+OpenWebUI Filter: Research RAG
 Intercepts queries, retrieves relevant chunks from Qdrant, augments prompt with context.
 
-To install: OpenWebUI Admin -> Pipelines -> Add Pipeline -> paste this file.
+To install: OpenWebUI Admin -> Functions -> Add Function -> paste this file -> set type to Filter.
 """
 
-import json
 import logging
-import os
 import re
 from typing import Optional
 
@@ -17,7 +15,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
-class Pipe:
+class Filter:
     class Valves(BaseModel):
         """Configuration exposed in OpenWebUI admin settings."""
         QDRANT_URL: str = Field(default="http://rp-qdrant:6333")
@@ -27,11 +25,10 @@ class Pipe:
         MIN_SCORE: float = Field(default=0.3)
 
     def __init__(self):
-        self.name = "Research RAG"
         self.valves = self.Valves()
 
-    async def pipe(self, body: dict, __user__: dict = None) -> dict:
-        """Main pipeline: retrieve context from Qdrant and augment the prompt."""
+    async def inlet(self, body: dict, __user__: dict = None) -> dict:
+        """Inlet filter: retrieve context from Qdrant and augment the prompt before it reaches the LLM."""
         messages = body.get("messages", [])
         if not messages:
             return body

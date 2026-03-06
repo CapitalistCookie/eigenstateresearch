@@ -14,5 +14,6 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY processor/shared/ ./shared/
 COPY scrapers/ ./
+COPY scripts/ ./scripts/
 ENV PYTHONPATH=/app
 CMD ["python", "scheduler.py"]
