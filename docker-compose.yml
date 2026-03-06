@@ -1,6 +1,16 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: rp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
   qdrant:
     image: qdrant/qdrant:v1.12.6
     container_name: rp-qdrant
@@ -45,10 +55,12 @@ services:
       dockerfile: processor/Dockerfile
     container_name: rp-processor
     depends_on:
+      - redis
       - qdrant
       - trilium
     env_file: .env
     environment:
+      - REDIS_URL=redis://redis:6379
       - QDRANT_URL=http://qdrant:6333
       - TRILIUM_URL=http://trilium:8080
     volumes:
@@ -61,8 +73,11 @@ services:
       dockerfile: scrapers/Dockerfile
     container_name: rp-scrapers
     depends_on:
+      - redis
       - qdrant
     env_file: .env
+    environment:
+      - REDIS_URL=redis://redis:6379
     volumes:
       - ./data:/app/data
     restart: unless-stopped

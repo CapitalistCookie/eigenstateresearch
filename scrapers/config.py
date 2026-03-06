@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    redis_url: str = "redis://10.228.0.3:6379"
+    redis_url: str = "redis://redis:6379"
     # Git repos for internal docs sync (on GCE VM via sparse checkout)
     git_repos: list[str] = [
         "https://github.com/CapitalistCookie/eigenstateresearch.git",
@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"
 
 
 settings = Settings()
