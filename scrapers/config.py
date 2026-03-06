@@ -4,10 +4,20 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     redis_url: str = "redis://redis:6379"
     # Git repos for internal docs sync (on GCE VM via sparse checkout)
+    github_pat: str = ""
     git_repos: list[str] = [
         "https://github.com/CapitalistCookie/eigenstateresearch.git",
         "https://github.com/CapitalistCookie/quanta-ai.git",
     ]
+
+    def get_authenticated_repos(self) -> list[str]:
+        """Return repo URLs with PAT injected for private repo access."""
+        if not self.github_pat:
+            return self.git_repos
+        return [
+            url.replace("https://github.com/", f"https://{self.github_pat}@github.com/")
+            for url in self.git_repos
+        ]
     git_repo_dir: str = "/home/user/repo-sync"
 
     # Topic filters

@@ -52,13 +52,13 @@ class InternalWatcher(BaseScraper):
         base_dir = settings.git_repo_dir
         os.makedirs(base_dir, exist_ok=True)
 
-        for repo_url in settings.git_repos:
+        for repo_url in settings.get_authenticated_repos():
             repo_name = repo_url.split("/")[-1].replace(".git", "")
             repo_dir = os.path.join(base_dir, repo_name)
 
             try:
                 if not os.path.exists(repo_dir):
-                    logger.info(f"Cloning {repo_url} to {repo_dir}...")
+                    logger.info(f"Cloning {repo_name} to {repo_dir}...")
                     subprocess.run(
                         ["git", "clone", "--depth=1", "--sparse", repo_url, repo_dir],
                         check=True,
@@ -70,7 +70,7 @@ class InternalWatcher(BaseScraper):
                 else:
                     subprocess.run(["git", "pull", "--ff-only"], cwd=repo_dir, check=True)
             except subprocess.CalledProcessError as e:
-                logger.warning(f"Git sync failed for {repo_url}: {e}. Skipping.")
+                logger.warning(f"Git sync failed for {repo_name}: {e}. Skipping.")
 
     def run(self) -> int:
         """Pull latest git repos and scan internal docs."""
